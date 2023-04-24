@@ -35,6 +35,7 @@ export class Product {
   @Column('text')
   gender: string;
 
+  //before insert
   @BeforeInsert()
   checkSlugInsert() {
     if (!this.slug) {
@@ -45,4 +46,6 @@ export class Product {
       .replaceAll(' ', '_')
       .replaceAll("'", '');
   }
+
+  // before update
 }
