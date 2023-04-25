@@ -10,6 +10,8 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
+import { PaginationDto } from '../common/dtos/pagination.dto';
+import { validate as isUUID } from 'uuid';
 
 @Injectable()
 export class ProductsService {
@@ -30,28 +32,56 @@ export class ProductsService {
   }
 
   //TODO paginar
-  async findAll() {
+  async findAll(paginationDto: PaginationDto) {
     try {
-      const products = await this.productRepository.find({});
+      const { limit = 10, offset = 0 } = paginationDto;
+      const products = await this.productRepository.find({
+        take: limit,
+        skip: offset,
+      });
       return products;
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async findOne(id: string) {
+  async findOne(term: string) {
+    let product;
     try {
-      const product = await this.productRepository.findOneBy({ id });
+      if (isUUID(term)) {
+        product = await this.productRepository.findOneBy({ id: term });
+      } else {
+        const queryBuilder = this.productRepository.createQueryBuilder();
+        product = await queryBuilder
+          .where('UPPER(title) = :title or slug = :slug', {
+            title: term.toUpperCase(),
+            slug: term.toLowerCase(),
+          })
+          .getOne();
+      }
+
       if (!product)
-        throw new NotFoundException(`Product with id ${id} not found`);
+        throw new NotFoundException(`Product with id ${term} not found`);
       return product;
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    const product = await this.productRepository.preload({
+      id,
+      ...updateProductDto,
+    });
+    if (!product)
+      throw new NotFoundException(`Product with id ${id} not found`);
+    try {
+      await this.productRepository.save(product);
+      return product;
+    } catch (error) {
+      this.handleError(error);
+    }
+    // return `This action updates a #${id} product`;
   }
 
   async remove(id: string) {
