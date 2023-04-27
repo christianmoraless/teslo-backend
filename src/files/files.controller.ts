@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Post,
   UploadedFile,
@@ -6,7 +7,8 @@ import {
 } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { fileFilter } from './helpers/file-filter';
+import { fileFilter, FileNamer } from './helpers';
+import { diskStorage } from 'multer';
 
 @Controller('files')
 export class FilesController {
@@ -16,9 +18,16 @@ export class FilesController {
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: fileFilter,
+      storage: diskStorage({
+        destination: './static/uploads',
+        filename: FileNamer,
+      }),
     }),
   )
   uploadProductImage(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Make sure that the file is an image');
+    }
     return file;
   }
 }
