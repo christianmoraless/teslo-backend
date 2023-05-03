@@ -7,12 +7,16 @@ import { User } from './entities/user.entity';
 import { UserRoleGuard } from './guards/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
 import { ValidRoles } from './interfaces';
-
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @ApiResponse({ status: 201, description: 'Product was created', type: User })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 403, description: 'Forbiden, Token related' })
   register(@Body() createUserDto: CreateUserDto) {
     return this.authService.create(createUserDto);
   }
@@ -55,5 +59,11 @@ export class AuthController {
       ok: true,
       user,
     };
+  }
+
+  @Get('check-auth-status')
+  @Auth()
+  checkAuthStatus(@GetUser() user: User) {
+    return this.authService.checkAuthStatus(user);
   }
 }

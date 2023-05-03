@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Product } from 'src/products/entities';
 import {
   BeforeInsert,
@@ -10,21 +11,27 @@ import {
 
 @Entity('users')
 export class User {
+  @ApiProperty()
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ApiProperty()
   @Column({ type: 'text', unique: true })
   email: string;
 
+  @ApiProperty()
   @Column({ type: 'text', select: false })
   password: string;
 
+  @ApiProperty()
   @Column({ type: 'text' })
   fullName: string;
 
+  @ApiProperty()
   @Column({ type: 'bool', default: true })
   isActive: boolean;
 
+  @ApiProperty()
   @Column({ type: 'text', array: true, default: ['user'] })
   roles: string[];
 
